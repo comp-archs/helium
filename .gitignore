@@ -1,0 +1,131 @@
+# =============================================================================
+# C / C++
+# =============================================================================
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+*.dSYM/
+*.su
+*.idb
+*.pdb
+*.d
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+build/
+out/
+
+# Autotools
+Makefile.in
+configure
+aclocal.m4
+autom4te.cache/
+*.lo
+*.la
+.libs/
+
+# =============================================================================
+# Rust
+# =============================================================================
+target/
+Cargo.lock
+**/*.rs.bk
+
+# =============================================================================
+# Go
+# =============================================================================
+*.test
+*.prof
+/vendor/
+/bin/
+go.sum
+
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.whl
+MANIFEST
+.venv/
+venv/
+env/
+ENV/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+htmlcov/
+.hypothesis/
+instance/
+.webassets-cache
+.scrapy
+docs/_build/
+.pybuilder/
+profile_default/
+ipython_config.py
+*.ipynb_checkpoints/
+celerybeat-schedule
+celerybeat.pid
+*.sage.py
+.spyderproject.db
+.spyderproject/
+.ropeproject/
+/site
+.pdm.toml
+__pypackages__/
+*.mo
+*.pot
+
+# =============================================================================
+# Editor / OS
+# =============================================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
