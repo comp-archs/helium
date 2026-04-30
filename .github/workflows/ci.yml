@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.os }} / ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Release]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v4
+
+      - name: Setup MSYS2 (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-clang-tools-extra
+
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
+        run: cmake -S assembler -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        run: cmake --build build --config ${{ matrix.build_type }} --verbose
+
+      - name: Test (Linux)
+        if: runner.os == 'Linux'
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Configure (Windows MSYS2 UCRT64)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: cmake -S assembler -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build (Windows MSYS2 UCRT64)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: cmake --build build --config ${{ matrix.build_type }} --verbose
+
+      - name: Test (Windows MSYS2 UCRT64)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: ctest --test-dir build --output-on-failure
