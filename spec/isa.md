@@ -1,10 +1,10 @@
-# Helium ISA Specification
+#### Helium ISA Specification
 
 > **Status:** Work in progress — updated as the ISA is designed.
 
 ---
 
-## 1. Overview
+#### 1. Overview
 
 Helium is a RISC-inspired 32-bit instruction-set architecture designed from
 scratch.  The goals are simplicity, orthogonality, and ease of implementation
@@ -21,7 +21,7 @@ in a cycle-accurate software emulator.
 
 ---
 
-## 2. Register File
+#### 2. Register File
 
 | Register | Alias | Role |
 |---|---|---|
@@ -33,11 +33,11 @@ in a cycle-accurate software emulator.
 
 ---
 
-## 3. Instruction Formats
+#### 3. Instruction Formats
 
 All instructions are 32 bits wide.  Three primary encoding formats are defined:
 
-### 3.1 R-Type (Register–Register)
+#### 3.1 R-Type (Register–Register)
 
 ```
  31      28 27   24 23   20 19   16 15         4 3       0
@@ -46,7 +46,7 @@ All instructions are 32 bits wide.  Three primary encoding formats are defined:
  +---------+-------+-------+-------+------------+---------+
 ```
 
-### 3.2 I-Type (Immediate)
+#### 3.2 I-Type (Immediate)
 
 ```
  31      28 27   24 23   20 19                          0
@@ -55,7 +55,7 @@ All instructions are 32 bits wide.  Three primary encoding formats are defined:
  +---------+-------+-------+-------------------------------+
 ```
 
-### 3.3 J-Type (Jump)
+#### 3.3 J-Type (Jump)
 
 ```
  31      28 27                                           0
@@ -66,7 +66,7 @@ All instructions are 32 bits wide.  Three primary encoding formats are defined:
 
 ---
 
-## 4. Opcode Table
+#### 4. Opcode Table
 
 > Opcodes are 4 bits (values 0x0 – 0xF).  The table will be filled in as
 > instructions are finalised.
@@ -92,7 +92,7 @@ All instructions are 32 bits wide.  Three primary encoding formats are defined:
 
 ---
 
-## 5. Memory Model
+#### 5. Memory Model
 
 - Address space: 32-bit (4 GiB), byte-addressable.
 - Load/store granularity: 32-bit words (aligned).
@@ -100,7 +100,7 @@ All instructions are 32 bits wide.  Three primary encoding formats are defined:
 
 ---
 
-## 6. Calling Convention (draft)
+#### 6. Calling Convention (draft)
 
 - Arguments: R1 – R4.
 - Return values: R1.
@@ -109,7 +109,7 @@ All instructions are 32 bits wide.  Three primary encoding formats are defined:
 
 ---
 
-## 7. Assembly Syntax
+#### 7. Assembly Syntax
 
 ```asm
 ; This is a comment
@@ -120,5 +120,3 @@ label:
 ```
 
 ---
-
-*This document will be expanded as the assembler and emulator are built.*

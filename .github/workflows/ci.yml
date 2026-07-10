@@ -22,6 +22,12 @@ jobs:
       - name: Setup Ninja
         uses: seanmiddleditch/gha-setup-ninja@v4
 
+      - name: Install deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ ninja-build clang-tidy clang-format
+
       - name: Setup MSYS2 (Windows)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
@@ -40,11 +46,11 @@ jobs:
 
       - name: Build (Linux)
         if: runner.os == 'Linux'
-        run: cmake --build build --config ${{ matrix.build_type }} --verbose
+        run: cmake --build build --verbose
 
       - name: Test (Linux)
         if: runner.os == 'Linux'
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build -C ${{ matrix.build_type }} --output-on-failure
 
       - name: Configure (Windows MSYS2 UCRT64)
         if: runner.os == 'Windows'
@@ -54,9 +60,9 @@ jobs:
       - name: Build (Windows MSYS2 UCRT64)
         if: runner.os == 'Windows'
         shell: msys2 {0}
-        run: cmake --build build --config ${{ matrix.build_type }} --verbose
+        run: cmake --build build --verbose
 
       - name: Test (Windows MSYS2 UCRT64)
         if: runner.os == 'Windows'
         shell: msys2 {0}
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build -C ${{ matrix.build_type }} --output-on-failure
