@@ -1,21 +1,31 @@
 #include "encoding.hpp"
+#include "isa.hpp"
 
+#include <array>
 #include <cstdint>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
+using helium::asm_isa::AluFunction;
 using helium::asm_isa::EncodingError;
+using helium::asm_isa::Format;
+using helium::asm_isa::Opcode;
+using helium::asm_isa::OperandForm;
 using helium::asm_isa::encodeI;
+using helium::asm_isa::encodeIU;
 using helium::asm_isa::encodeJ;
 using helium::asm_isa::encodeR;
 using helium::asm_isa::fieldFunct;
 using helium::asm_isa::fieldIImm;
+using helium::asm_isa::fieldIImmRaw;
 using helium::asm_isa::fieldJTarget;
 using helium::asm_isa::fieldOpcode;
 using helium::asm_isa::fieldRd;
 using helium::asm_isa::fieldRs1;
 using helium::asm_isa::fieldRs2;
+using helium::asm_isa::isLegalInstruction;
+using helium::asm_isa::lookupInstruction;
 
 namespace {
 
@@ -85,7 +95,6 @@ void testEncodeIBasicAndSign() {
 }
 
 void testEncodeIBounds20Bit() {
-    // 20-bit signed range: [-524288, 524287]
     const std::int32_t minImm = -(1 << 19);
     const std::int32_t maxImm =  (1 << 19) - 1;
 
@@ -97,6 +106,14 @@ void testEncodeIBounds20Bit() {
 
     expectThrows([&]() { (void)encodeI(0x8, 0, 0, minImm - 1); }, "I-type imm underflow throws");
     expectThrows([&]() { (void)encodeI(0x8, 0, 0, maxImm + 1); }, "I-type imm overflow throws");
+}
+
+void testEncodeIUnsigned() {
+    const std::uint32_t word = encodeIU(0x3, 1, 0, 0xFFFFFu);
+    expectEqU32(word, 0x310FFFFFu, "encodeIU packs raw 20-bit immediate");
+    expectEqU32(fieldIImmRaw(word), 0xFFFFFu, "fieldIImmRaw preserves unsigned value");
+    expectThrows([]() { (void)encodeIU(0x3, 0, 0, 0x100000u); },
+                 "unsigned I-type immediate overflow throws");
 }
 
 void testEncodeJBasicAndBounds() {
@@ -129,20 +146,101 @@ void testFieldRangeChecks() {
     expectThrows([&]() { (void)encodeR(0, 0, 0, 0, 16); }, "funct > 4 bits throws");
 }
 
+constexpr std::uint8_t value(Opcode opcode) {
+    return static_cast<std::uint8_t>(opcode);
+}
+
+constexpr std::uint8_t value(AluFunction funct) {
+    return static_cast<std::uint8_t>(funct);
+}
+
+void testIsaGoldenVectors() {
+    struct Vector {
+        const char* name;
+        std::uint32_t actual;
+        std::uint32_t expected;
+    };
+
+    const std::array<Vector, 21> vectors{{
+        {"NOP",  encodeR(value(Opcode::ALU), 0, 0, 0, value(AluFunction::NOP)),  0x00000000u},
+        {"ADD",  encodeR(value(Opcode::ALU), 1, 2, 3, value(AluFunction::ADD)),  0x01230001u},
+        {"SUB",  encodeR(value(Opcode::ALU), 1, 2, 3, value(AluFunction::SUB)),  0x01230002u},
+        {"AND",  encodeR(value(Opcode::ALU), 1, 2, 3, value(AluFunction::AND)),  0x01230003u},
+        {"OR",   encodeR(value(Opcode::ALU), 1, 2, 3, value(AluFunction::OR)),   0x01230004u},
+        {"XOR",  encodeR(value(Opcode::ALU), 1, 2, 3, value(AluFunction::XOR)),  0x01230005u},
+        {"SHL",  encodeR(value(Opcode::ALU), 1, 2, 3, value(AluFunction::SHL)),  0x01230006u},
+        {"SHR",  encodeR(value(Opcode::ALU), 1, 2, 3, value(AluFunction::SHR)),  0x01230007u},
+        {"SAR",  encodeR(value(Opcode::ALU), 1, 2, 3, value(AluFunction::SAR)),  0x01230008u},
+        {"SLT",  encodeR(value(Opcode::ALU), 1, 2, 3, value(AluFunction::SLT)),  0x01230009u},
+        {"SLTU", encodeR(value(Opcode::ALU), 1, 2, 3, value(AluFunction::SLTU)), 0x0123000Au},
+        {"ADDI", encodeI(value(Opcode::ADDI), 1, 2, -1),                         0x212FFFFFu},
+        {"LUI",  encodeIU(value(Opcode::LUI), 1, 0, 0xABCDEu),                   0x310ABCDEu},
+        {"LD",   encodeI(value(Opcode::LD), 1, 2, 16),                            0x41200010u},
+        {"ST",   encodeI(value(Opcode::ST), 1, 2, -16),                           0x512FFFF0u},
+        {"BEQ",  encodeI(value(Opcode::BEQ), 1, 2, 16),                           0x61200010u},
+        {"BNE",  encodeI(value(Opcode::BNE), 1, 2, -4),                           0x712FFFFCu},
+        {"JMP",  encodeJ(value(Opcode::JMP), 16),                                 0x80000010u},
+        {"JAL",  encodeJ(value(Opcode::JAL), -4),                                 0x9FFFFFFCu},
+        {"JALR", encodeI(value(Opcode::JALR), 1, 2, -4),                          0xA12FFFFCu},
+        {"HALT", encodeJ(value(Opcode::HALT), 0),                                 0xB0000000u},
+    }};
+
+    for (const auto& vector : vectors) {
+        expectEqU32(vector.actual, vector.expected, std::string("golden vector ") + vector.name);
+        expectTrue(isLegalInstruction(vector.expected), std::string("legal golden vector ") + vector.name);
+    }
+
+    expectEqU32(encodeI(value(Opcode::ADDI), 1, 0, -1), 0x210FFFFFu,
+                "LDI pseudo expands to ADDI rd, R0, imm");
+    expectEqU32(encodeI(value(Opcode::JALR), 0, 13, 0), 0xA0D00000u,
+                "RET pseudo expands to JALR R0, LR, 0");
+}
+
+void testLegalEncodingRules() {
+    expectTrue(!isLegalInstruction(0x10000000u), "reserved primary opcode is illegal");
+    expectTrue(!isLegalInstruction(0xC0000000u), "reserved high primary opcode is illegal");
+    expectTrue(!isLegalInstruction(0x0000000Bu), "reserved ALU function is illegal");
+    expectTrue(!isLegalInstruction(0x00000011u), "nonzero R reserved bits are illegal");
+    expectTrue(!isLegalInstruction(0x01000000u), "NOP with operands is illegal");
+    expectTrue(!isLegalInstruction(0x31100000u), "LUI with nonzero rs1 is illegal");
+    expectTrue(!isLegalInstruction(0xB0000001u), "HALT payload is illegal");
+    expectTrue(isLegalInstruction(0x60000002u),
+               "misaligned branch target is an execution fault, not an illegal encoding");
+}
+
+void testInstructionMetadata() {
+    const auto nop = lookupInstruction("nop");
+    expectTrue(nop.has_value(), "NOP metadata exists");
+    expectTrue(nop && nop->format == Format::R && nop->operands == OperandForm::None && !nop->pseudo,
+               "NOP is a zero-operand physical R encoding");
+
+    const auto ldi = lookupInstruction("LDI");
+    expectTrue(ldi && ldi->opcode == Opcode::ADDI && ldi->pseudo,
+               "LDI is an ADDI pseudo-instruction");
+
+    const auto ret = lookupInstruction("RET");
+    expectTrue(ret && ret->opcode == Opcode::JALR && ret->pseudo,
+               "RET is a JALR pseudo-instruction");
+}
+
 } // namespace
 
 int main() {
     testEncodeRBasic();
     testEncodeIBasicAndSign();
     testEncodeIBounds20Bit();
+    testEncodeIUnsigned();
     testEncodeJBasicAndBounds();
     testFieldRangeChecks();
+    testIsaGoldenVectors();
+    testLegalEncodingRules();
+    testInstructionMetadata();
 
     if (g_failures == 0) {
-        std::cout << "[PASS] test_encoding\n";
+        std::cout << "PASS test_encoding\n";
         return 0;
     }
 
-    std::cerr << "[FAIL] test_encoding: " << g_failures << " failure(s)\n";
+    std::cerr << "FAIL test_encoding: " << g_failures << " failure(s)\n";
     return 1;
 }

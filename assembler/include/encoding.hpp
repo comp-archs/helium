@@ -20,8 +20,6 @@ constexpr std::uint32_t OPCODE_BITS = 4;
 constexpr std::uint32_t REG_BITS    = 4;
 constexpr std::uint32_t FUNCT_BITS  = 4;
 
-// Keep this as 20 to match the bit diagram (opcode[31:28], rd[27:24], rs1[23:20], imm[19:0]).
-// If you later finalize imm16, change this constant + encoder logic/tests.
 constexpr std::uint32_t I_IMM_BITS  = 20;
 constexpr std::uint32_t J_TGT_BITS  = 28;
 
@@ -30,7 +28,8 @@ bool fitsUnsigned(std::int64_t value, std::uint32_t bits);
 bool fitsSigned(std::int64_t value, std::uint32_t bits);
 
 // Primitive field packers
-// Validates fields and packs into 32-bit instruction words.
+// Validate field widths and pack 32-bit words. They can represent reserved or
+// noncanonical encodings; assembly output must also pass isLegalInstruction.
 //
 // R-type layout:
 // [31:28]=opcode, [27:24]=rd, [23:20]=rs1, [19:16]=rs2, [15:4]=0, [3:0]=funct
@@ -47,6 +46,12 @@ std::uint32_t encodeI(std::uint8_t opcode,
                       std::uint8_t rs1,
                       std::int32_t imm);
 
+// I-type layout with an unsigned raw immediate, used by LUI.
+std::uint32_t encodeIU(std::uint8_t opcode,
+                       std::uint8_t rd,
+                       std::uint8_t rs1,
+                       std::uint32_t imm);
+
 // J-type layout:
 // [31:28]=opcode, [27:0]=target (signed PC-relative immediate field)
 std::uint32_t encodeJ(std::uint8_t opcode,
@@ -58,6 +63,7 @@ std::uint8_t  fieldRd(std::uint32_t word);
 std::uint8_t  fieldRs1(std::uint32_t word);
 std::uint8_t  fieldRs2(std::uint32_t word);
 std::uint8_t  fieldFunct(std::uint32_t word);
+std::uint32_t fieldIImmRaw(std::uint32_t word);
 std::int32_t  fieldIImm(std::uint32_t word);   // sign-extended
 std::int32_t  fieldJTarget(std::uint32_t word); // sign-extended
 

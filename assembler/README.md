@@ -1,15 +1,42 @@
-#### Helium Assembler (assembler)
+# Helium Assembler
 
 A compact assembler component for the Helium ISA.
 
-#### What this component does
+## Implemented capabilities
 
-- Parses Helium assembly instructions.
-- Validates mnemonics/registers against ISA definitions.
-- Encodes instructions into 32-bit machine words.
-- (Planned) resolves labels/symbols and emits output binaries.
+- Parses and validates every physical ISA v0.1 instruction plus `LDI` and
+  `RET`.
+- Resolves forward and backward labels in two passes and emits raw
+  little-endian bytes.
+- Reports source errors with one-based line and column locations.
 
-#### Current structure
+## Syntax
+
+Source is line-oriented. `;` begins a comment, operands are comma-separated,
+and a label may appear alone or before an instruction. Labels are case-sensitive
+and match `[A-Za-z_][A-Za-z0-9_]*`; mnemonics and registers are
+case-insensitive. Numeric immediates require `#` and accept signed decimal or
+hexadecimal forms, such as `#16`, `#-4`, and `#-0x10`.
+
+Control-flow labels are converted to byte offsets relative to the current
+instruction. Numeric control operands are already byte offsets. Direct jump and
+branch offsets must be divisible by four; `JALR` immediates need not be.
+
+```asm
+start: LDI R1, #10
+loop:  ADDI R1, R1, #-1
+       BNE R1, ZERO, loop
+       RET
+```
+
+## CLI
+
+```bash
+helium-asm input.asm -o output.bin
+helium-asm --help
+```
+
+## Current structure
 
 - `include/isa.hpp` / `src/isa.cpp`  
   ISA metadata and lookup helpers:
@@ -22,31 +49,31 @@ A compact assembler component for the Helium ISA.
   - range checks and encoding exceptions
   - field extractors for tests/debug
 
-- `tests/test_encoding.cpp`  
-  Unit tests for encoding correctness and boundary behavior.
+- `include/parser.hpp`, `include/symbols.hpp`, `include/assembler.hpp` and
+  corresponding `src` files provide parsing, symbol resolution, and the public
+  words/bytes assembly API.
+- `tests/` contains focused encoding, parser, symbol, assembler, and CLI tests.
 
-#### Build
+## Build
 
 ```bash
 cmake -S assembler -B build -G Ninja
 cmake --build build
 ```
 
-#### Run tests
-
-If tests are wired in CMake:
+## Run tests
 
 ```bash
 ctest --test-dir build --output-on-failure
 ```
 
-Or run test binary directly (example):
+Or run the test binary directly:
 
 ```bash
-./build/helium_asm_tests
+./build/test_assembler
 ```
 
-#### Notes
+## Notes
 
 - Project uses C++20.
 - If your editor shows false errors for `<optional>`/`<string_view>`, ensure it reads `build/compile_commands.json`.

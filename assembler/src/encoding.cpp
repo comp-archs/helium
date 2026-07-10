@@ -92,6 +92,18 @@ std::uint32_t encodeI(std::uint8_t opcode,
     return (op << 28u) | (d << 24u) | (s1 << 20u) | im;
 }
 
+std::uint32_t encodeIU(std::uint8_t opcode,
+                       std::uint8_t rd,
+                       std::uint8_t rs1,
+                       std::uint32_t imm) {
+    const std::uint32_t op = packUnsigned(opcode, OPCODE_BITS, "opcode");
+    const std::uint32_t d = packUnsigned(rd, REG_BITS, "rd");
+    const std::uint32_t s1 = packUnsigned(rs1, REG_BITS, "rs1");
+    const std::uint32_t im = packUnsigned(imm, I_IMM_BITS, "imm");
+
+    return (op << 28u) | (d << 24u) | (s1 << 20u) | im;
+}
+
 std::uint32_t encodeJ(std::uint8_t opcode,
                       std::int32_t target) {
     const std::uint32_t op = packUnsigned(opcode, OPCODE_BITS, "opcode");
@@ -121,9 +133,12 @@ std::uint8_t fieldFunct(std::uint32_t word) {
     return static_cast<std::uint8_t>(word & maskFor(FUNCT_BITS));
 }
 
+std::uint32_t fieldIImmRaw(std::uint32_t word) {
+    return word & maskFor(I_IMM_BITS);
+}
+
 std::int32_t fieldIImm(std::uint32_t word) {
-    const std::uint32_t raw = word & maskFor(I_IMM_BITS);
-    return signExtend(raw, I_IMM_BITS);
+    return signExtend(fieldIImmRaw(word), I_IMM_BITS);
 }
 
 std::int32_t fieldJTarget(std::uint32_t word) {
