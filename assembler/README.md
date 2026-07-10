@@ -1,8 +1,8 @@
-# Helium Assembler
+#### Helium Assembler
 
 A compact assembler component for the Helium ISA.
 
-## Implemented capabilities
+#### Implemented capabilities
 
 - Parses and validates every physical ISA v0.1 instruction plus `LDI` and
   `RET`.
@@ -10,7 +10,7 @@ A compact assembler component for the Helium ISA.
   little-endian bytes.
 - Reports source errors with one-based line and column locations.
 
-## Syntax
+#### Syntax
 
 Source is line-oriented. `;` begins a comment, operands are comma-separated,
 and a label may appear alone or before an instruction. Labels are case-sensitive
@@ -29,14 +29,14 @@ loop:  ADDI R1, R1, #-1
        RET
 ```
 
-## CLI
+#### CLI
 
 ```bash
 helium-asm input.asm -o output.bin
 helium-asm --help
 ```
 
-## Current structure
+#### Current structure
 
 - `include/isa.hpp` / `src/isa.cpp`  
   ISA metadata and lookup helpers:
@@ -54,14 +54,14 @@ helium-asm --help
   words/bytes assembly API.
 - `tests/` contains focused encoding, parser, symbol, assembler, and CLI tests.
 
-## Build
+#### Build
 
 ```bash
 cmake -S assembler -B build -G Ninja
 cmake --build build
 ```
 
-## Run tests
+#### Run tests
 
 ```bash
 ctest --test-dir build --output-on-failure
@@ -72,8 +72,6 @@ Or run the test binary directly:
 ```bash
 ./build/test_assembler
 ```
-
-## Notes
 
 - Project uses C++20.
 - If your editor shows false errors for `<optional>`/`<string_view>`, ensure it reads `build/compile_commands.json`.
