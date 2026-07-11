@@ -28,23 +28,6 @@ loop:  ADDI R1, R1, #-1
        BNE R1, ZERO, loop
        RET
 ```
-#### Current structure
-
-- `include/isa.hpp` / `src/isa.cpp`  
-  ISA metadata and lookup helpers:
-  - mnemonics ↔ opcode/format
-  - register parsing (e.g., `R0..R15`, aliases)
-
-- `include/encoding.hpp` / `src/encoding.cpp`  
-  Bit-packing and extraction:
-  - `encodeR`, `encodeI`, `encodeJ`
-  - range checks and encoding exceptions
-  - field extractors for tests/debug
-
-- `include/parser.hpp`, `include/symbols.hpp`, `include/assembler.hpp` and
-  corresponding `src` files provide parsing, symbol resolution, and the public
-  words/bytes assembly API.
-- `tests/` contains focused encoding, parser, symbol, assembler, and CLI tests.
 
 ```bash
 ./build/test_assembler
