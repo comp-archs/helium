@@ -28,14 +28,6 @@ loop:  ADDI R1, R1, #-1
        BNE R1, ZERO, loop
        RET
 ```
-
-#### CLI
-
-```bash
-helium-asm input.asm -o output.bin
-helium-asm --help
-```
-
 #### Current structure
 
 - `include/isa.hpp` / `src/isa.cpp`  
