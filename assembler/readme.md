@@ -46,21 +46,6 @@ loop:  ADDI R1, R1, #-1
   words/bytes assembly API.
 - `tests/` contains focused encoding, parser, symbol, assembler, and CLI tests.
 
-#### Build
-
-```bash
-cmake -S assembler -B build -G Ninja
-cmake --build build
-```
-
-#### Run tests
-
-```bash
-ctest --test-dir build --output-on-failure
-```
-
-Or run the test binary directly:
-
 ```bash
 ./build/test_assembler
 ```
