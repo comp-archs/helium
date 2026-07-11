@@ -1,12 +1,5 @@
-# Helium ISA Specification
-
-> **Version:** 0.1
->
-> **Status:** Frozen architectural baseline
->
-> **Frozen:** 2026-07-10
-
-## 1. Scope
+#### Helium ISA Specification
+#### 1. Scope
 
 Helium is a small RISC-inspired 32-bit instruction-set architecture. Version
 0.1 defines the architectural state, instruction encodings and behavior needed
@@ -30,7 +23,7 @@ instruction semantics.
 All registers, addresses and arithmetic results are 32-bit bit-vectors unless
 an instruction explicitly specifies a signed interpretation.
 
-## 2. Architectural state
+#### 2. Architectural state
 
 | Register | Alias | Role |
 |---|---|---|
@@ -51,11 +44,11 @@ Source operands are read from the pre-instruction state. A destination of R0 is
 legal; the operation still executes and can fault, but its register result is
 discarded.
 
-## 3. Instruction encodings
+#### 3. Instruction encodings
 
 All fields are shown most-significant bit first.
 
-### 3.1 R-type
+#### 3.1 R-type
 
 ```text
  31      28 27   24 23   20 19   16 15         4 3       0
@@ -67,7 +60,7 @@ All fields are shown most-significant bit first.
 Bits 15-4 must be zero. Opcode `0x0` selects the ALU class and `funct`
 selects the operation.
 
-### 3.2 I-type
+#### 3.2 I-type
 
 ```text
  31      28 27   24 23   20 19                          0
@@ -82,7 +75,7 @@ Except for `LUI`, `imm20` is a signed two's-complement value in the range
 The `rd` field is the value to store for `ST` and the first comparison operand
 for `BEQ` and `BNE`; those instructions do not write a destination register.
 
-### 3.3 J-type
+#### 3.3 J-type
 
 ```text
  31      28 27                                           0
@@ -97,9 +90,9 @@ through `134217727`.
 `HALT` uses the J-type physical layout but has no assembly operands and requires
 all 28 payload bits to be zero.
 
-## 4. Final opcode allocation
+#### 4. Final opcode allocation
 
-### 4.1 Primary opcodes
+#### 4.1 Primary opcodes
 
 | Opcode | Mnemonic/class | Encoding | Assembly operands |
 |---:|---|---|---|
@@ -117,7 +110,7 @@ all 28 payload bits to be zero.
 | `0xB` | `HALT` | J payload fixed to zero | none |
 | `0xC-0xF` | Reserved | - | - |
 
-### 4.2 ALU functions for opcode `0x0`
+#### 4.2 ALU functions for opcode `0x0`
 
 | Funct | Mnemonic | Result |
 |---:|---|---|
@@ -137,18 +130,18 @@ all 28 payload bits to be zero.
 `ADD`, `SUB`, `ADDI`, effective-address calculations and PC calculations wrap
 modulo 2^32. They do not set flags or raise arithmetic-overflow faults.
 
-## 5. Instruction semantics
+#### 5. Instruction semantics
 
 Let `P` be the address of the executing instruction. Unless control flow is
 taken or a fault occurs, the next PC is `P + 4`, modulo 2^32.
 
-### 5.1 Immediate and upper-immediate operations
+#### 5.1 Immediate and upper-immediate operations
 
 - `ADDI rd, rs1, #imm20`: `R[rd] = R[rs1] + sign_extend(imm20)`.
 - `LUI rd, #uimm20`: `R[rd] = zero_extend(uimm20) << 12`. The encoded `rs1`
   field must be zero.
 
-### 5.2 Loads and stores
+#### 5.2 Loads and stores
 
 The effective address is `R[base] + sign_extend(imm20)`, modulo 2^32.
 
@@ -159,7 +152,7 @@ The effective address is `R[base] + sign_extend(imm20)`, modulo 2^32.
 - `LD R0, ...` still performs the access and can fault.
 - `ST R0, ...` stores four zero bytes.
 
-### 5.3 Branches and direct jumps
+#### 5.3 Branches and direct jumps
 
 Branch and jump immediates are signed **byte offsets relative to `P`**, not to
 `P + 4`:
@@ -183,7 +176,7 @@ executable memory until the subsequent instruction fetch. Thus, a `JAL` or
 `JALR` to an aligned but unmapped address commits its link and target PC before
 that next fetch raises `instruction-access-fault`.
 
-### 5.4 Indirect jumps
+#### 5.4 Indirect jumps
 
 `JALR rd, base, #imm20` behaves as follows:
 
@@ -196,7 +189,7 @@ The implementation does not clear or otherwise modify low target bits. If
 `rd == base`, the old base value is used. If `rd == R0`, the link is discarded.
 A target fault occurs before the link is written.
 
-### 5.5 Halt
+#### 5.5 Halt
 
 The only legal `HALT` encoding is `0xB0000000`. It retires, advances PC to
 `P + 4`, and enters `Halted`. No instruction is fetched while halted. Execution
@@ -205,7 +198,7 @@ can resume only after reset.
 Falling past mapped memory, executing zero-filled memory as repeated NOPs, or
 encountering an illegal instruction is not an implicit successful halt.
 
-## 6. Canonical and illegal encodings
+#### 6. Canonical and illegal encodings
 
 Decoders must reject the following as illegal instructions:
 
@@ -221,7 +214,7 @@ Register fields that name R0 are otherwise legal. A misaligned encoded control
 offset is not itself an illegal instruction: it raises an instruction-address
 fault if the transfer is performed.
 
-## 7. Reset and execution environment
+#### 7. Reset and execution environment
 
 Architectural reset performs the following actions:
 
@@ -235,7 +228,7 @@ load a raw binary at address zero, reset the core and require software to
 initialize SP. The amount of mapped RAM and host I/O mechanism are execution
 environment choices rather than ISA properties.
 
-## 8. Fault model
+#### 8. Fault model
 
 Version 0.1 has no trap vector or exception registers. A fault enters the
 terminal `Faulted` state and records at least:
@@ -271,7 +264,7 @@ Fault priority is:
 For loads and stores, address alignment takes priority over memory mapping or
 access checks.
 
-## 9. Assembly language baseline
+#### 9. Assembly language baseline
 
 Assembly is case-insensitive for mnemonics and register names. `;` starts a
 comment. `#` prefixes a numeric immediate; labels are written without `#`.
@@ -299,7 +292,7 @@ The initial assembler defines these pseudos:
 `LUI` and `ADDI` are sufficient to construct arbitrary 32-bit constants. A
 future `LI` pseudo may select one or two instructions without changing the ISA.
 
-## 10. Calling convention v0.1
+#### 10. Calling convention v0.1
 
 - Arguments: R1-R4.
 - Return value: R1.
@@ -309,7 +302,7 @@ future `LI` pseudo may select one or two instructions without changing the ISA.
 - `RET` returns through LR.
 - The stack grows toward lower addresses and SP remains four-byte aligned.
 
-## 11. Canonical golden vectors
+#### 11. Canonical golden vectors
 
 These words are normative encoding vectors. Binary output writes each word in
 little-endian byte order.
@@ -339,7 +332,3 @@ little-endian byte order.
 | `HALT` | `0xB0000000` | `00 00 00 B0` |
 | `LDI R1, #-1` | `0x210FFFFF` | `FF FF 0F 21` |
 | `RET` | `0xA0D00000` | `00 00 D0 A0` |
-
-The C++ encoding tests must reproduce these words directly. Emulator decode and
-execution tests must consume the same words so assembler and emulator behavior
-cannot drift independently from this specification.
